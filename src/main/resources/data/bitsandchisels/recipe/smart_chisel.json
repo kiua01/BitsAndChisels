@@ -1,6 +1,6 @@
 {
   "type": "minecraft:crafting_shaped",
-  "category": "tools",
+  "category": "equipment",
   "pattern": ["R", "C", "D"],
   "key": {
     "C": "bitsandchisels:iron_chisel",
