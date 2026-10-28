@@ -64,7 +64,7 @@ public final class BitUtils {
         if (!player.isCreative()) {
             ItemStack drop = new ItemStack(BitsAndChisels.BIT_ITEM);
             BitData.setState(drop, state);
-            player.drop(drop, false);
+            Block.popResource(level, pos, drop);
         }
         removeIfEmpty(level, pos, bits);
         return true;
@@ -91,3 +91,4 @@ public final class BitUtils {
         if (bits.isEmpty()) level.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
     }
 }
+
