@@ -7,6 +7,7 @@ import io.github.coolmineman.bitsandchisels.wrench.WrenchItem;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.creativetab.v1.FabricCreativeModeTab;
 import net.fabricmc.fabric.api.event.player.AttackBlockCallback;
+import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
@@ -19,6 +20,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
@@ -38,7 +40,6 @@ public final class BitsAndChisels implements ModInitializer {
         new BitsBlock(BlockBehaviour.Properties.of().strength(4.0f).sound(SoundType.STONE).noOcclusion().setId(BITS_BLOCK_KEY))
     );
 
-    // Keep the original block-item ID for world/mod compatibility, even though it is not shown in the creative tab.
     public static final Item BITS_BLOCK_ITEM = registerBlockItem("bits_block", BITS_BLOCK);
 
     public static final BlockEntityType<BitsBlockEntity> BITS_BLOCK_ENTITY = Registry.register(
@@ -66,6 +67,7 @@ public final class BitsAndChisels implements ModInitializer {
             output.accept(SMART_CHISEL);
             output.accept(WRENCH);
             output.accept(BLUEPRINT);
+            output.accept(BIT_ITEM);
         })
         .build();
 
@@ -73,10 +75,18 @@ public final class BitsAndChisels implements ModInitializer {
     public void onInitialize() {
         Registry.register(BuiltInRegistries.CREATIVE_MODE_TAB, CREATIVE_TAB_KEY, CREATIVE_TAB);
 
+        // Also put tools into the vanilla Tools & Utilities tab so they are easy to find
+        ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.TOOLS_AND_UTILITIES).register(entries -> {
+            entries.accept(DIAMOND_CHISEL);
+            entries.accept(IRON_CHISEL);
+            entries.accept(SMART_CHISEL);
+            entries.accept(WRENCH);
+            entries.accept(BLUEPRINT);
+        });
+
         PayloadTypeRegistry.serverboundPlay().register(ChiselPayload.TYPE, ChiselPayload.CODEC);
         ServerPlayNetworking.registerGlobalReceiver(ChiselPayload.TYPE, (payload, context) -> payload.handle(context.player()));
 
-        // The client sends precise micro-bit coordinates. Prevent vanilla from also breaking the full block.
         AttackBlockCallback.EVENT.register((player, level, hand, pos, direction) -> {
             if (player.getItemInHand(hand).getItem() instanceof ChiselItem && !level.isClientSide()) {
                 return InteractionResult.FAIL;
