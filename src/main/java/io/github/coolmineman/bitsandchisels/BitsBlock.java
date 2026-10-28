@@ -1,6 +1,5 @@
 package io.github.coolmineman.bitsandchisels;
 
-import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.BaseEntityBlock;
@@ -15,11 +14,6 @@ import org.jetbrains.annotations.Nullable;
 public final class BitsBlock extends BaseEntityBlock {
     public BitsBlock(Properties properties) {
         super(properties);
-    }
-
-    @Override
-    protected MapCodec<? extends BaseEntityBlock> codec() {
-        return simpleCodec(BitsBlock::new);
     }
 
     @Override
