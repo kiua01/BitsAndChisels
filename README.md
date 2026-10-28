@@ -1,4 +1,4 @@
-> ## ModPorterMC Port
+> ## ModPorterMC Port 👾
 > This fork contains a Minecraft **26.2 Fabric compatibility port** of Bits and Chisels.
 >
 > Port work includes build/Loom updates, NBT and rendering API migration,
