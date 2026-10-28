@@ -7,7 +7,6 @@ import io.github.coolmineman.bitsandchisels.wrench.WrenchItem;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.creativetab.v1.FabricCreativeModeTab;
 import net.fabricmc.fabric.api.event.player.AttackBlockCallback;
-import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
@@ -20,7 +19,6 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTab;
-import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
@@ -74,15 +72,6 @@ public final class BitsAndChisels implements ModInitializer {
     @Override
     public void onInitialize() {
         Registry.register(BuiltInRegistries.CREATIVE_MODE_TAB, CREATIVE_TAB_KEY, CREATIVE_TAB);
-
-        // Also put tools into the vanilla Tools & Utilities tab so they are easy to find
-        ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.TOOLS_AND_UTILITIES).register(entries -> {
-            entries.accept(DIAMOND_CHISEL);
-            entries.accept(IRON_CHISEL);
-            entries.accept(SMART_CHISEL);
-            entries.accept(WRENCH);
-            entries.accept(BLUEPRINT);
-        });
 
         PayloadTypeRegistry.serverboundPlay().register(ChiselPayload.TYPE, ChiselPayload.CODEC);
         ServerPlayNetworking.registerGlobalReceiver(ChiselPayload.TYPE, (payload, context) -> payload.handle(context.player()));
