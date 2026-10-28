@@ -3,8 +3,8 @@
   "id": "bitsandchisels",
   "version": "${version}",
   "name": "BitsAndChisels",
-  "description": "A Minecraft 26.2 Fabric port of Bits And Chisels.",
-  "authors": ["cool_mineman", "26.2 port maintenance: JoshM487"],
+  "description": "A Minecraft 26.3 Fabric port of Bits And Chisels.",
+  "authors": ["cool_mineman", "26.3 port maintenance: JoshM487 / kiua01"],
   "license": "CC0-1.0",
   "icon": "assets/bitsandchisels/icon.png",
   "environment": "*",
@@ -13,8 +13,8 @@
     "client": ["io.github.coolmineman.bitsandchisels.client.BitsBlockClient"]
   },
   "depends": {
-    "fabricloader": ">=0.19.3",
-    "fabric-api": ">=0.156.0",
+    "fabricloader": ">=0.19.5",
+    "fabric-api": ">=0.165.0",
     "minecraft": "${minecraft_version}",
     "java": ">=25"
   }
