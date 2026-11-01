@@ -32,13 +32,13 @@ public final class BitsBlockClient implements ClientModInitializer {
         HudElementRegistry.attachElementBefore(
             VanillaHudElements.CHAT,
             Identifier.fromNamespaceAndPath(BitsAndChisels.MOD_ID, "radial"),
-            (graphics, delta) -> { BitsRadialMenu.render(graphics); BuildPreview.render(graphics); }
+            (graphics, delta) -> BuildPreview.render(graphics)
         );
 
         ClientSendMessageEvents.ALLOW_CHAT.register(message -> {
             String msg = message.trim().toLowerCase();
             if (msg.equals(".bits") || msg.equals(".bits menu") || msg.equals(".chisel")) {
-                BitsRadialMenu.toggle();
+                Minecraft.getInstance().setScreen(new BitsMenuScreen());
                 return false;
             }
             return true;
