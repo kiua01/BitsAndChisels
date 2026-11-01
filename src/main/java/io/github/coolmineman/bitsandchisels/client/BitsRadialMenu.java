@@ -11,12 +11,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
 /**
- * Effortless Building–style radial menu.
- * <p>
- * Page BUILD: shape modes (line, wall, cube, …)<br>
- * Page CHISEL: Bits & Chisels tools (opens when you pick “Chisel & Bits”)
- * <p>
- * Toggle with {@code .bits}. Hover a slice, toggle again to select.
+ * iOS-inspired radial menu (Control Center / share-sheet style).
  */
 public final class BitsRadialMenu {
     public enum Page { BUILD, CHISEL }
@@ -25,45 +20,54 @@ public final class BitsRadialMenu {
     public static Page page = Page.BUILD;
     private static int hovered = -1;
 
+    private static final int IOS_BLUE = 0x007AFF;
+    private static final int IOS_LABEL = 0xFFFFFF;
+    private static final int IOS_SECONDARY = 0xAEAEB2;
+    private static final int IOS_TERTIARY = 0x8E8E93;
+    private static final int IOS_FILL = 0x2C2C2E;
+    private static final int IOS_GREEN = 0x30D158;
+    private static final int IOS_ORANGE = 0xFF9F0A;
+    private static final int IOS_PURPLE = 0xBF5AF2;
+    private static final int IOS_TEAL = 0x64D2FF;
+
     private enum Kind { MODE, TOOL, OPEN_CHISEL, BACK }
 
-    private record Entry(String label, Kind kind, Item item, BuildMode mode, int color) {
-        static Entry mode(BuildMode m, int color) {
-            return new Entry(m.label, Kind.MODE, null, m, color);
+    private record Entry(String label, String glyph, Kind kind, Item item, BuildMode mode, int tint) {
+        static Entry mode(BuildMode m, String glyph, int tint) {
+            return new Entry(m.label, glyph, Kind.MODE, null, m, tint);
         }
-        static Entry tool(String label, Item item) {
-            return new Entry(label, Kind.TOOL, item, null, 0xE0E0E0);
+        static Entry tool(String label, String glyph, Item item) {
+            return new Entry(label, glyph, Kind.TOOL, item, null, IOS_ORANGE);
         }
         static Entry openChisel() {
-            return new Entry("Chisel & Bits", Kind.OPEN_CHISEL, null, null, 0xFFD700);
+            return new Entry("Chisel & Bits", "◆", Kind.OPEN_CHISEL, null, null, IOS_ORANGE);
         }
         static Entry back() {
-            return new Entry("← Build modes", Kind.BACK, null, null, 0xAAAAAA);
+            return new Entry("Back", "‹", Kind.BACK, null, null, IOS_SECONDARY);
         }
     }
 
-    // Effortless-like grouping colors
     private static final Entry[] BUILD_ENTRIES = {
-        Entry.mode(BuildMode.DISABLED, 0x888888),
-        Entry.mode(BuildMode.SINGLE, 0xFFFFFF),
-        Entry.mode(BuildMode.LINE, 0x7FDBFF),
-        Entry.mode(BuildMode.WALL, 0x7FDBFF),
-        Entry.mode(BuildMode.FLOOR, 0x7FDBFF),
-        Entry.mode(BuildMode.CUBE, 0x2ECC40),
-        Entry.mode(BuildMode.DIAGONAL_LINE, 0xB10DC9),
-        Entry.mode(BuildMode.CIRCLE, 0x0074D9),
-        Entry.mode(BuildMode.SPHERE, 0x0074D9),
+        Entry.mode(BuildMode.DISABLED, "○", IOS_SECONDARY),
+        Entry.mode(BuildMode.SINGLE, "●", IOS_LABEL),
+        Entry.mode(BuildMode.LINE, "─", IOS_TEAL),
+        Entry.mode(BuildMode.WALL, "▮", IOS_TEAL),
+        Entry.mode(BuildMode.FLOOR, "▬", IOS_TEAL),
+        Entry.mode(BuildMode.CUBE, "■", IOS_GREEN),
+        Entry.mode(BuildMode.DIAGONAL_LINE, "╱", IOS_PURPLE),
+        Entry.mode(BuildMode.CIRCLE, "◌", IOS_BLUE),
+        Entry.mode(BuildMode.SPHERE, "◉", IOS_BLUE),
         Entry.openChisel(),
     };
 
     private static final Entry[] CHISEL_ENTRIES = {
         Entry.back(),
-        Entry.tool("Diamond Chisel", BitsAndChisels.DIAMOND_CHISEL),
-        Entry.tool("Iron Chisel", BitsAndChisels.IRON_CHISEL),
-        Entry.tool("Smart Chisel", BitsAndChisels.SMART_CHISEL),
-        Entry.tool("Wrench", BitsAndChisels.WRENCH),
-        Entry.tool("Blueprint", BitsAndChisels.BLUEPRINT),
-        Entry.tool("Bit Item", BitsAndChisels.BIT_ITEM),
+        Entry.tool("Diamond", "✦", BitsAndChisels.DIAMOND_CHISEL),
+        Entry.tool("Iron", "✧", BitsAndChisels.IRON_CHISEL),
+        Entry.tool("Smart", "✪", BitsAndChisels.SMART_CHISEL),
+        Entry.tool("Wrench", "⚒", BitsAndChisels.WRENCH),
+        Entry.tool("Blueprint", "☰", BitsAndChisels.BLUEPRINT),
+        Entry.tool("Bit", "▪", BitsAndChisels.BIT_ITEM),
     };
 
     private BitsRadialMenu() {}
@@ -74,10 +78,7 @@ public final class BitsRadialMenu {
 
     public static void toggle() {
         if (open) close(true);
-        else {
-            open = true;
-            // stay on current page
-        }
+        else open = true;
     }
 
     public static void close(boolean apply) {
@@ -85,8 +86,7 @@ public final class BitsRadialMenu {
             Entry[] entries = current();
             if (hovered < entries.length) {
                 Entry e = entries[hovered];
-                apply(e);
-                // Stay open when switching pages (Chisel & Bits / Back)
+                applyEntry(e);
                 if (e.kind == Kind.OPEN_CHISEL || e.kind == Kind.BACK) {
                     hovered = -1;
                     return;
@@ -102,22 +102,24 @@ public final class BitsRadialMenu {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
 
+        Font font = mc.font;
         int screenW = mc.getWindow().getGuiScaledWidth();
         int screenH = mc.getWindow().getGuiScaledHeight();
         double cx = screenW / 2.0;
         double cy = screenH / 2.0;
-        double outerR = Math.min(screenW, screenH) * 0.30;
-        double innerR = outerR * 0.35;
+        double outerR = Math.min(screenW, screenH) * 0.32;
+        double iconR = outerR * 0.72;
+        double hubR = outerR * 0.28;
+
         Entry[] entries = current();
         int n = entries.length;
         double slice = Math.PI * 2.0 / n;
 
-        // Mouse → hovered slice
         double mx = mc.mouseHandler.xpos() * screenW / (double) mc.getWindow().getWidth() - cx;
         double my = mc.mouseHandler.ypos() * screenH / (double) mc.getWindow().getHeight() - cy;
         double dist = Math.sqrt(mx * mx + my * my);
-        if (dist < innerR * 0.5) {
-            hovered = -1; // dead zone center
+        if (dist < hubR) {
+            hovered = -1;
         } else {
             double angle = Math.atan2(my, mx);
             if (angle < 0) angle += Math.PI * 2.0;
@@ -126,65 +128,70 @@ public final class BitsRadialMenu {
             if (hovered >= n) hovered = n - 1;
         }
 
-        Font font = mc.font;
+        String title = page == Page.CHISEL ? "Chisel & Bits" : "Build";
+        int titleW = font.width(title);
+        graphics.text(font, title, (int) (cx - titleW / 2.0), (int) (cy - outerR - 28), IOS_LABEL, true);
 
-        // Draw ring labels (Effortless style: text on each wedge)
+        String subtitle = page == Page.CHISEL ? "Choose a tool" : "Choose a mode";
+        int subW = font.width(subtitle);
+        graphics.text(font, subtitle, (int) (cx - subW / 2.0), (int) (cy - outerR - 16), IOS_TERTIARY, true);
+
         for (int i = 0; i < n; i++) {
-            double a0 = -Math.PI / 2.0 + i * slice;
-            double am = a0 + slice / 2.0;
-            double rLabel = (innerR + outerR) * 0.55;
-            double ix = cx + Math.cos(am) * rLabel;
-            double iy = cy + Math.sin(am) * rLabel;
-
+            double am = -Math.PI / 2.0 + i * slice + slice / 2.0;
+            double ix = cx + Math.cos(am) * iconR;
+            double iy = cy + Math.sin(am) * iconR;
             boolean hi = i == hovered;
-            int color = hi ? 0xFFFFFF : entries[i].color;
-            String label = entries[i].label;
-            // shorten long labels
-            if (label.length() > 14) label = label.substring(0, 12) + "…";
-            int tw = font.width(label);
-            graphics.text(font, label, (int) (ix - tw / 2.0), (int) iy - 4, color, true);
+            Entry e = entries[i];
 
-            // simple wedge marker for hovered
+            int glyphColor = hi ? IOS_BLUE : e.tint;
             if (hi) {
-                String mark = "●";
-                int mw = font.width(mark);
-                double rm = outerR * 0.92;
-                graphics.text(font, mark,
-                    (int) (cx + Math.cos(am) * rm - mw / 2.0),
-                    (int) (cy + Math.sin(am) * rm - 4),
-                    0xFFFFFF, true);
+                String ring = "◎";
+                int rw = font.width(ring);
+                graphics.text(font, ring, (int) (ix - rw / 2.0), (int) iy - 10, IOS_BLUE, true);
+            } else {
+                String ring = "○";
+                int rw = font.width(ring);
+                graphics.text(font, ring, (int) (ix - rw / 2.0), (int) iy - 10, IOS_FILL, true);
             }
+            int gw = font.width(e.glyph);
+            graphics.text(font, e.glyph, (int) (ix - gw / 2.0), (int) iy - 4, glyphColor, true);
+
+            String caption = shortLabel(e.label);
+            int cw = font.width(caption);
+            graphics.text(font, caption, (int) (ix - cw / 2.0), (int) iy + 10, hi ? IOS_LABEL : IOS_SECONDARY, true);
         }
 
-        // Center hub — current status
-        String hub;
-        if (page == Page.CHISEL) {
-            hub = "Chisel & Bits";
-        } else {
-            hub = BuildModeState.mode.label;
-        }
-        int tw = font.width(hub);
-        graphics.text(font, hub, (int) (cx - tw / 2.0), (int) cy - 10, 0xFFFFFF, true);
+        String hubMain;
+        if (hovered >= 0 && hovered < n) hubMain = entries[hovered].label;
+        else if (page == Page.CHISEL) hubMain = "Tools";
+        else hubMain = BuildModeState.mode.label;
+        int hmW = font.width(hubMain);
+        graphics.text(font, hubMain, (int) (cx - hmW / 2.0), (int) cy - 6, IOS_LABEL, true);
 
-        String sub = page == Page.CHISEL ? "pick a tool" : "build mode";
-        if (hovered >= 0 && hovered < n) {
-            sub = entries[hovered].label;
-        }
-        int sw = font.width(sub);
-        graphics.text(font, sub, (int) (cx - sw / 2.0), (int) cy + 2, 0xA0E0FF, true);
+        String hubSub = ".bits to confirm";
+        int hsW = font.width(hubSub);
+        graphics.text(font, hubSub, (int) (cx - hsW / 2.0), (int) cy + 6, IOS_TERTIARY, true);
 
-        String hint = ".bits to confirm";
-        int hw = font.width(hint);
-        graphics.text(font, hint, (int) (cx - hw / 2.0), (int) (cy + outerR + 8), 0x808080, true);
+        String home = "———";
+        int homeW = font.width(home);
+        graphics.text(font, home, (int) (cx - homeW / 2.0), (int) (cy + outerR + 14), IOS_TERTIARY, true);
     }
 
-    private static void apply(Entry entry) {
+    private static String shortLabel(String s) {
+        if (s == null) return "";
+        if (s.equals("Chisel & Bits")) return "Chisel";
+        if (s.equals("Diagonal Line")) return "Diagonal";
+        if (s.length() > 10) return s.substring(0, 9) + "…";
+        return s;
+    }
+
+    private static void applyEntry(Entry entry) {
         switch (entry.kind) {
             case OPEN_CHISEL -> {
                 page = Page.CHISEL;
-                open = true; // stay open on chisel page
+                open = true;
                 hovered = -1;
-                BitsAndChisels.LOGGER.info("[Bits] Opened Chisel & Bits menu");
+                BitsAndChisels.LOGGER.info("[Bits] Chisel & Bits");
             }
             case BACK -> {
                 page = Page.BUILD;
@@ -193,7 +200,7 @@ public final class BitsRadialMenu {
             }
             case MODE -> {
                 BuildModeState.setMode(entry.mode);
-                BitsAndChisels.LOGGER.info("[Bits] Build mode → {}", entry.mode.label);
+                BitsAndChisels.LOGGER.info("[Bits] Mode → {}", entry.mode.label);
             }
             case TOOL -> selectTool(entry);
         }
@@ -215,7 +222,7 @@ public final class BitsRadialMenu {
             if (player.getAbilities().instabuild) {
                 player.getInventory().add(new ItemStack(entry.item));
             }
-            BitsAndChisels.LOGGER.info("[Bits] Tool: {}", entry.label);
+            BitsAndChisels.LOGGER.info("[Bits] {}", entry.label);
             return;
         }
         int hotbar = player.getInventory().getSelectedSlot();
@@ -225,8 +232,7 @@ public final class BitsRadialMenu {
             player.getInventory().setItem(hotbar, picked);
             player.getInventory().setItem(invSlot, hot);
         }
-        // Using a chisel disables mass-build mode so left-click carves bits
         BuildModeState.setMode(BuildMode.DISABLED);
-        BitsAndChisels.LOGGER.info("[Bits] Selected {} (build mode off for chiseling)", entry.label);
+        BitsAndChisels.LOGGER.info("[Bits] Selected {}", entry.label);
     }
 }
