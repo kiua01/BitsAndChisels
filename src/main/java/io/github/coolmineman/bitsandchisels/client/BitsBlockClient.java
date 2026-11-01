@@ -27,6 +27,8 @@ public final class BitsBlockClient implements ClientModInitializer {
     public void onInitializeClient() {
         BlockEntityRenderers.register(BitsAndChisels.BITS_BLOCK_ENTITY, BitsBlockEntityRenderer::new);
 
+        BuildModeClient.register();
+
         HudElementRegistry.attachElementBefore(
             VanillaHudElements.CHAT,
             Identifier.fromNamespaceAndPath(BitsAndChisels.MOD_ID, "radial"),
