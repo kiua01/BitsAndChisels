@@ -32,7 +32,7 @@ public final class BitsBlockClient implements ClientModInitializer {
         HudElementRegistry.attachElementBefore(
             VanillaHudElements.CHAT,
             Identifier.fromNamespaceAndPath(BitsAndChisels.MOD_ID, "radial"),
-            (graphics, delta) -> BitsRadialMenu.render(graphics)
+            (graphics, delta) -> { BitsRadialMenu.render(graphics); BuildPreview.render(graphics); }
         );
 
         ClientSendMessageEvents.ALLOW_CHAT.register(message -> {
