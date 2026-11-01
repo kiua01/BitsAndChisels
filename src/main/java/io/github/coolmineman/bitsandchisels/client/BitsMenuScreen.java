@@ -4,7 +4,8 @@ import io.github.coolmineman.bitsandchisels.BitsAndChisels;
 import io.github.coolmineman.bitsandchisels.buildmode.BuildMode;
 import io.github.coolmineman.bitsandchisels.buildmode.BuildModeState;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
@@ -77,7 +78,7 @@ public final class BitsMenuScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+    public void render(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
         // Dim world behind (glass scrim)
         g.fill(0, 0, this.width, this.height, 0x99000000);
 
@@ -101,9 +102,9 @@ public final class BitsMenuScreen extends Screen {
 
         // Title
         String title = tab == Tab.CHISEL ? "Chisel & Bits" : "Build Modes";
-        g.drawString(this.font, title, contentX, py + 12, TEXT, false);
+        g.text(this.font, title, contentX, py + 12, TEXT, false);
         String sub = tab == Tab.CHISEL ? "Tools" : "Mode: " + BuildModeState.mode.label;
-        g.drawString(this.font, sub, contentX, py + 24, TEXT_DIM, false);
+        g.text(this.font, sub, contentX, py + 24, TEXT_DIM, false);
 
         // Grid of slots (5 columns)
         List<Entry> list = currentList();
@@ -136,31 +137,31 @@ public final class BitsMenuScreen extends Screen {
 
             Entry e = list.get(i);
             int gw = this.font.width(e.glyph);
-            g.drawString(this.font, e.glyph, sx + (slot - gw) / 2, sy + 8, hot ? ACCENT : TEXT, false);
+            g.text(this.font, e.glyph, sx + (slot - gw) / 2, sy + 8, hot ? ACCENT : TEXT, false);
 
             // tiny label under glyph if space
             String cap = shortName(e.label);
             int cw = this.font.width(cap);
             if (cw < slot - 2) {
-                g.drawString(this.font, cap, sx + (slot - cw) / 2, sy + slot - 12, TEXT_DIM, false);
+                g.text(this.font, cap, sx + (slot - cw) / 2, sy + slot - 12, TEXT_DIM, false);
             }
         }
 
         // Footer page-style status
         String page = (tab == Tab.BUILD ? "1" : "2") + " / 2";
         int pw = this.font.width(page);
-        g.drawString(this.font, page, px + panelW - pw - 12, py + panelH - 16, TEXT_DIM, false);
+        g.text(this.font, page, px + panelW - pw - 12, py + panelH - 16, TEXT_DIM, false);
 
         // Tooltip
         if (hoverIndex >= 0 && hoverIndex < list.size()) {
             Entry e = list.get(hoverIndex);
-            g.renderTooltip(this.font, Component.literal(e.label), mouseX, mouseY);
+            g.text(this.font, e.label, mouseX + 12, mouseY - 12, TEXT, true);
         }
 
         super.render(g, mouseX, mouseY, partialTick);
     }
 
-    private void drawRailButton(GuiGraphics g, int x, int y, int w, int h, boolean selected, String label, int mx, int my) {
+    private void drawRailButton(GuiGraphicsExtractor g, int x, int y, int w, int h, boolean selected, String label, int mx, int my) {
         boolean hot = mx >= x && mx < x + w && my >= y && my < y + h;
         int bg = selected ? ACCENT_SOFT : (hot ? SLOT_HOVER : SLOT);
         g.fill(x, y, x + w, y + h, bg);
@@ -169,10 +170,10 @@ public final class BitsMenuScreen extends Screen {
         }
         int tw = this.font.width(label);
         // vertical-ish: just center text
-        g.drawString(this.font, label, x + (w - tw) / 2, y + h / 2 - 4, selected ? TEXT : TEXT_DIM, false);
+        g.text(this.font, label, x + (w - tw) / 2, y + h / 2 - 4, selected ? TEXT : TEXT_DIM, false);
     }
 
-    private static void fillRound(GuiGraphics g, int x0, int y0, int x1, int y1, int argb) {
+    private static void fillRound(GuiGraphicsExtractor g, int x0, int y0, int x1, int y1, int argb) {
         // Approximate rounded rect with plain fill (MC GUI limitation without custom sprites)
         g.fill(x0, y0, x1, y1, argb);
     }
@@ -190,8 +191,10 @@ public final class BitsMenuScreen extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button != 0) return super.mouseClicked(mouseX, mouseY, button);
+    public boolean mouseClicked(MouseButtonEvent event, boolean bl) {
+        if (event.button() != 0) return super.mouseClicked(event, bl);
+        double mouseX = event.x();
+        double mouseY = event.y();
 
         int panelW = Math.min(420, this.width - 40);
         int panelH = Math.min(280, this.height - 40);
@@ -199,7 +202,6 @@ public final class BitsMenuScreen extends Screen {
         int py = (this.height - panelH) / 2;
         int railW = 56;
 
-        // Rail clicks
         if (mouseX >= px + 8 && mouseX < px + railW - 8) {
             if (mouseY >= py + 16 && mouseY < py + 52) {
                 tab = Tab.BUILD;
@@ -218,7 +220,7 @@ public final class BitsMenuScreen extends Screen {
                 return true;
             }
         }
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(event, bl);
     }
 
     private void activate(Entry e) {
