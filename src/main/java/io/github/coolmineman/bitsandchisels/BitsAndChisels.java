@@ -47,10 +47,22 @@ public final class BitsAndChisels implements ModInitializer {
     );
 
     public static final Item BIT_ITEM = registerItem("bit_item", BitItem::new, new Item.Properties().stacksTo(64));
-    public static final Item DIAMOND_CHISEL = registerItem("diamond_chisel", p -> new ChiselItem(p, ChiselItem.Mode.SINGLE), new Item.Properties().stacksTo(1));
-    public static final Item IRON_CHISEL = registerItem("iron_chisel", p -> new ChiselItem(p, ChiselItem.Mode.FOUR_BY_FOUR), new Item.Properties().stacksTo(1));
-    public static final Item SMART_CHISEL = registerItem("smart_chisel", p -> new ChiselItem(p, ChiselItem.Mode.SMART), new Item.Properties().stacksTo(1));
-    public static final Item WRENCH = registerItem("wrench", WrenchItem::new, new Item.Properties().stacksTo(1));
+    public static final Item DIAMOND_CHISEL = registerItem(
+        "diamond_chisel",
+        p -> new ChiselItem(p, ChiselItem.Mode.SINGLE),
+        new Item.Properties().stacksTo(1).durability(1561)
+    );
+    public static final Item IRON_CHISEL = registerItem(
+        "iron_chisel",
+        p -> new ChiselItem(p, ChiselItem.Mode.FOUR_BY_FOUR),
+        new Item.Properties().stacksTo(1).durability(250)
+    );
+    public static final Item SMART_CHISEL = registerItem(
+        "smart_chisel",
+        p -> new ChiselItem(p, ChiselItem.Mode.SMART),
+        new Item.Properties().stacksTo(1).durability(1561)
+    );
+    public static final Item WRENCH = registerItem("wrench", WrenchItem::new, new Item.Properties().stacksTo(1).durability(250));
     public static final Item BLUEPRINT = registerItem("blueprint", BlueprintItem::new, new Item.Properties().stacksTo(1));
 
     public static final ResourceKey<CreativeModeTab> CREATIVE_TAB_KEY = ResourceKey.create(
@@ -66,6 +78,7 @@ public final class BitsAndChisels implements ModInitializer {
             output.accept(WRENCH);
             output.accept(BLUEPRINT);
             output.accept(BIT_ITEM);
+            output.accept(BITS_BLOCK_ITEM);
         })
         .build();
 
@@ -74,8 +87,11 @@ public final class BitsAndChisels implements ModInitializer {
         Registry.register(BuiltInRegistries.CREATIVE_MODE_TAB, CREATIVE_TAB_KEY, CREATIVE_TAB);
 
         PayloadTypeRegistry.serverboundPlay().register(ChiselPayload.TYPE, ChiselPayload.CODEC);
-        ServerPlayNetworking.registerGlobalReceiver(ChiselPayload.TYPE, (payload, context) -> payload.handle(context.player()));
+        ServerPlayNetworking.registerGlobalReceiver(ChiselPayload.TYPE, (payload, context) ->
+            payload.handle(context.player())
+        );
 
+        // Prevent vanilla block break while holding a chisel (server)
         AttackBlockCallback.EVENT.register((player, level, hand, pos, direction) -> {
             if (player.getItemInHand(hand).getItem() instanceof ChiselItem && !level.isClientSide()) {
                 return InteractionResult.FAIL;
