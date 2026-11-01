@@ -3,6 +3,7 @@ package io.github.coolmineman.bitsandchisels;
 import io.github.coolmineman.bitsandchisels.blueprints.BlueprintItem;
 import io.github.coolmineman.bitsandchisels.chisel.ChiselItem;
 import io.github.coolmineman.bitsandchisels.network.ChiselPayload;
+import io.github.coolmineman.bitsandchisels.network.BuildPlacePayload;
 import io.github.coolmineman.bitsandchisels.wrench.WrenchItem;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.creativetab.v1.FabricCreativeModeTab;
@@ -88,6 +89,8 @@ public final class BitsAndChisels implements ModInitializer {
         Registry.register(BuiltInRegistries.CREATIVE_MODE_TAB, CREATIVE_TAB_KEY, CREATIVE_TAB);
 
         PayloadTypeRegistry.serverboundPlay().register(ChiselPayload.TYPE, ChiselPayload.CODEC);
+        PayloadTypeRegistry.serverboundPlay().register(BuildPlacePayload.TYPE, BuildPlacePayload.CODEC);
+        ServerPlayNetworking.registerGlobalReceiver(BuildPlacePayload.TYPE, (payload, context) -> payload.handle(context.player()));
         ServerPlayNetworking.registerGlobalReceiver(ChiselPayload.TYPE, (payload, context) ->
             payload.handle(context.player())
         );
