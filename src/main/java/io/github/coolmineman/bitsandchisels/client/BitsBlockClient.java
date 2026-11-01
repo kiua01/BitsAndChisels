@@ -1,6 +1,9 @@
 package io.github.coolmineman.bitsandchisels.client;
 
 import io.github.coolmineman.bitsandchisels.BitsAndChisels;
+import io.github.coolmineman.bitsandchisels.critter.Critters;
+import net.fabricmc.fabric.api.client.rendering.v1.EntityModelLayerRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import io.github.coolmineman.bitsandchisels.chisel.ChiselItem;
 import io.github.coolmineman.bitsandchisels.network.ChiselPayload;
 import net.fabricmc.api.ClientModInitializer;
@@ -26,6 +29,12 @@ public final class BitsBlockClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         BlockEntityRenderers.register(BitsAndChisels.BITS_BLOCK_ENTITY, BitsBlockEntityRenderer::new);
+
+        EntityModelLayerRegistry.registerModelLayer(CritterRenderer.Model.LAYER, CritterRenderer.Model::createBodyLayer);
+        for (int i = 0; i < Critters.TYPES.size(); i++) {
+            final String id = Critters.SPECS.get(i).id();
+            EntityRendererRegistry.register(Critters.TYPES.get(i), ctx -> new CritterRenderer(ctx, id));
+        }
 
         BuildModeClient.register();
 
