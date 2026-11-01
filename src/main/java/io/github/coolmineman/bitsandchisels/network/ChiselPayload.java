@@ -8,6 +8,7 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
 
 public record ChiselPayload(BlockPos origin, int x1, int y1, int z1, int x2, int y2, int z2, int mode) implements CustomPacketPayload {
     public static final Type<ChiselPayload> TYPE = new Type<>(BitsAndChisels.id("chisel"));
@@ -46,7 +47,9 @@ public record ChiselPayload(BlockPos origin, int x1, int y1, int z1, int x2, int
         if (expected == null || chisel.mode() != expected) return;
 
         if (expected == ChiselItem.Mode.SINGLE) {
-            BitUtils.breakBit(player, origin, x1, y1, z1);
+            if (BitUtils.breakBit(player, origin, x1, y1, z1)) {
+                damageChisel(player);
+            }
             return;
         }
 
@@ -56,6 +59,14 @@ public record ChiselPayload(BlockPos origin, int x1, int y1, int z1, int x2, int
         // Smart chisel is intentionally limited to the original nearby-selection behavior.
         if (dx > 63 || dy > 63 || dz > 63) return;
         if ((dx + 1L) * (dy + 1L) * (dz + 1L) > 262_144L) return;
-        BitUtils.breakRegion(player, origin, x1, y1, z1, x2, y2, z2);
+        int broken = BitUtils.breakRegion(player, origin, x1, y1, z1, x2, y2, z2);
+        if (broken > 0) damageChisel(player);
+    }
+
+    private static void damageChisel(ServerPlayer player) {
+        ItemStack stack = player.getMainHandItem();
+        if (stack.isEmpty() || !(stack.getItem() instanceof ChiselItem)) return;
+        if (player.isCreative()) return;
+        stack.hurtAndBreak(1, player, net.minecraft.world.entity.EquipmentSlot.MAINHAND);
     }
 }
