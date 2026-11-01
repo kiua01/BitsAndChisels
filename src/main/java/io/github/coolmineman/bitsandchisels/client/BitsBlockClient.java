@@ -4,6 +4,10 @@ import io.github.coolmineman.bitsandchisels.BitsAndChisels;
 import io.github.coolmineman.bitsandchisels.chisel.ChiselItem;
 import io.github.coolmineman.bitsandchisels.network.ChiselPayload;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.message.v1.ClientSendMessageEvents;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
+import net.minecraft.resources.Identifier;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.event.player.AttackBlockCallback;
@@ -22,6 +26,21 @@ public final class BitsBlockClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         BlockEntityRenderers.register(BitsAndChisels.BITS_BLOCK_ENTITY, BitsBlockEntityRenderer::new);
+
+        HudElementRegistry.attachElementBefore(
+            VanillaHudElements.CHAT,
+            Identifier.fromNamespaceAndPath(BitsAndChisels.MOD_ID, "radial"),
+            (graphics, delta) -> BitsRadialMenu.render(graphics)
+        );
+
+        ClientSendMessageEvents.ALLOW_CHAT.register(message -> {
+            String msg = message.trim().toLowerCase();
+            if (msg.equals(".bits") || msg.equals(".bits menu") || msg.equals(".chisel")) {
+                BitsRadialMenu.toggle();
+                return false;
+            }
+            return true;
+        });
 
         AttackBlockCallback.EVENT.register((player, level, hand, pos, direction) -> {
             if (!level.isClientSide()) return InteractionResult.PASS;
