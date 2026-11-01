@@ -10,13 +10,14 @@ import net.fabricmc.fabric.api.event.player.AttackBlockCallback;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.phys.BlockHitResult;
 
 public final class BitsBlockClient implements ClientModInitializer {
     private static BlockPos smartOrigin;
     private static int smartX, smartY, smartZ;
+    private static long lastBreakTick;
+    private static boolean fastBreak;
 
     @Override
     public void onInitializeClient() {
@@ -26,6 +27,11 @@ public final class BitsBlockClient implements ClientModInitializer {
             if (!level.isClientSide()) return InteractionResult.PASS;
             if (!(player.getItemInHand(hand).getItem() instanceof ChiselItem chisel)) return InteractionResult.PASS;
             if (!(Minecraft.getInstance().hitResult instanceof BlockHitResult hit)) return InteractionResult.PASS;
+
+            long now = System.currentTimeMillis() / 50L;
+            if (now - lastBreakTick < (fastBreak ? 3 : 6)) {
+                return InteractionResult.SUCCESS; // consume swing, don't spam
+            }
 
             int x = bitCoord(hit.getLocation().x - pos.getX(), hit.getDirection().getStepX());
             int y = bitCoord(hit.getLocation().y - pos.getY(), hit.getDirection().getStepY());
@@ -44,42 +50,59 @@ public final class BitsBlockClient implements ClientModInitializer {
                 }
                 case SMART -> handleSmart(pos, x, y, z);
             }
+
+            fastBreak = now - lastBreakTick < 10;
+            lastBreakTick = now;
             return InteractionResult.SUCCESS;
         });
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            if (client.player == null || !(client.player.getMainHandItem().getItem() instanceof ChiselItem c) || c.mode() != ChiselItem.Mode.SMART) {
+            if (client.player == null) {
                 smartOrigin = null;
+                return;
+            }
+            if (!(client.player.getMainHandItem().getItem() instanceof ChiselItem chisel)) {
+                smartOrigin = null;
+                return;
+            }
+            if (chisel.mode() != ChiselItem.Mode.SMART) {
+                smartOrigin = null;
+                return;
+            }
+            // Clear smart selection when not attacking
+            if (!client.options.keyAttack.isDown()) {
+                // keep origin until next attack starts a new region
             }
         });
     }
 
-    private static int clampBit(int value) {
-        return Math.max(0, Math.min(15, value));
-    }
-
-    private static int bitCoord(double local, int faceStep) {
-        return (int)Math.floor(local * 16.0 + faceStep * -0.5);
-    }
-
     private static void handleSmart(BlockPos pos, int x, int y, int z) {
-        if (smartOrigin == null || smartOrigin.distSqr(pos) > 9.0) {
-            smartOrigin = pos.immutable();
+        // First click: set origin. Second click: send region.
+        if (smartOrigin == null) {
+            smartOrigin = pos;
             smartX = x;
             smartY = y;
             smartZ = z;
             return;
         }
-
-        int x2 = (pos.getX() - smartOrigin.getX()) * 16 + x;
-        int y2 = (pos.getY() - smartOrigin.getY()) * 16 + y;
-        int z2 = (pos.getZ() - smartOrigin.getZ()) * 16 + z;
-        ClientPlayNetworking.send(new ChiselPayload(
-            smartOrigin,
-            Math.min(smartX, x2), Math.min(smartY, y2), Math.min(smartZ, z2),
-            Math.max(smartX, x2), Math.max(smartY, y2), Math.max(smartZ, z2),
-            2
-        ));
+        // Convert second point into global bit coords relative to first origin
+        int gx1 = smartX;
+        int gy1 = smartY;
+        int gz1 = smartZ;
+        int gx2 = x + (pos.getX() - smartOrigin.getX()) * 16;
+        int gy2 = y + (pos.getY() - smartOrigin.getY()) * 16;
+        int gz2 = z + (pos.getZ() - smartOrigin.getZ()) * 16;
+        ClientPlayNetworking.send(new ChiselPayload(smartOrigin, gx1, gy1, gz1, gx2, gy2, gz2, 2));
         smartOrigin = null;
+    }
+
+    private static int bitCoord(double local, int step) {
+        return (int) Math.floor(local * 16.0 + step * -0.5);
+    }
+
+    private static int clampBit(int v) {
+        if (v < 0) return 0;
+        if (v > 15) return 15;
+        return v;
     }
 }
