@@ -71,6 +71,6 @@ public record BuildPlacePayload(int modeOrdinal, List<BlockPos> clicks) implemen
                 }
             }
         }
-        BitsAndChisels.LOGGER.info("BuildMode {} placed {} blocks for {}", mode.label, placed, player.getGameProfile().getName());
+        BitsAndChisels.LOGGER.info("BuildMode {} placed {} blocks for {}", mode.label, placed, player.getScoreboardName());
     }
 }
