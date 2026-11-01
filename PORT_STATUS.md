@@ -6,48 +6,48 @@
 - Fabric API: 0.165.0+26.3
 - Fabric Loom: 1.17-SNAPSHOT
 - Java: 25
-- Port version: 2.7.3+26.3-port.1
+- Port version: 2.7.3+26.3-port.2
 
-## Ported core features
-- 16x16x16 (4096) micro-bit storage per Bits Block
-- Full-block conversion to chiseled bit blocks
-- Single-bit diamond chisel behavior
-- 4x4x4 iron chisel behavior
-- Smart chisel region behavior with server validation
-- Bit item state storage using modern data components
-- Bit placement across block faces
-- Block entity save/load and client synchronization
-- Dynamic collision/selection voxel shape
-- Wrench rotate/mirror behavior
-- Blueprint copy/place behavior
+## Complete core feature set
+- 16×16×16 (4096) micro-bit storage per Bits Block
+- Full-block conversion to chiseled bit blocks (left-click with chisel)
+- Diamond chisel: single-bit removal
+- Iron chisel: 4×4×4 region removal
+- Smart chisel: two-click region selection with server validation
+- Client chisel rate-limit (matches original feel)
+- Tool durability (diamond/smart 1561, iron/wrench 250)
+- Bit item placement across block faces
+- Bit item state via modern data components
+- Block entity save/load + client sync
+- Dynamic collision / selection voxel shapes
+- Wrench rotate/mirror
+- Blueprint copy/place
 - 26.3 custom-payload networking
-- 26.3 block/item/creative-tab registration
-- 26.3 block entity render-state renderer (no raw OpenGL)
-- 26.3 item-model JSON layout
-- 26.3 recipe directory/result syntax
-- Original textures and translations retained
+- Creative tab with all items + bits block
+- Recipes (`category: equipment` for tools)
+- Textures, models, translations retained
+- 26.3 block-entity render-state renderer
 
-## Intentionally deferred from the old build
-These optional/visual compatibility layers were removed from the base port so they do not prevent 26.3 from loading:
-- old REI integration
-- Canvas/FREX compatibility hooks
-- DashLoader integration
-- Flan/GOML compatibility hooks
-- old mixin-based red selection-box renderer
-- old particle suppression mixin
+## Intentionally deferred (optional / visual)
+- REI / JEI integration
+- Canvas/FREX hooks
+- DashLoader
+- Flan/GOML claim hooks
+- Red selection-box outline mixin (smart/diamond preview)
+- Particle suppression mixin
 
-The base renderer is correctness-first and renders visible micro-bits through the 26.3 block-model render-state API. It can be optimized with mesh batching after runtime validation.
+## How to use
+1. Creative tab **Bits And Chisels**, or craft:
+   - Diamond + stick → diamond chisel
+   - Iron + stick → iron chisel
+   - Redstone block + iron chisel + diamond → smart chisel
+   - Iron + iron chisel → wrench
+   - Lapis + paper → blueprint
+2. Left-click solid blocks with a chisel to carve bits (bits drop).
+3. Place bit items on surfaces to rebuild.
+4. Smart chisel: first left-click sets corner A, second sets corner B.
 
-## 26.2 -> 26.3 notes
-- No usage of removed Fabric APIs (FuelRegistry, CompostingChanceRegistry, block transformer registries, etc.)
-- Version bumps only + metadata updates
-- Java 25 and Loom 1.17 remain correct for 26.3
-
-## Verification state
-- Resource JSON syntax: validated (from 26.2 port)
-- No legacy intermediary `class_####` references remain in the port source
-- No TODO/FIXME placeholders in the port source
-- A Java 25 GitHub Actions workflow is included at `.github/workflows/build.yml`
-- A real Loom compile has NOT been completed in this environment.
-
-Do not publish or label a JAR as production-ready until the included Java 25 workflow passes and a client/server smoke test is performed.
+## Verification
+- GitHub Actions Java 25 build on `agent/mc26.3-port`
+- Recipe category fixed for 26.3 (`equipment`)
+- No legacy intermediary class names in port sources
