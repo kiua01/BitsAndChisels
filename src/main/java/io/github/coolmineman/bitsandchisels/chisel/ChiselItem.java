@@ -1,7 +1,6 @@
 package io.github.coolmineman.bitsandchisels.chisel;
 
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
 
 public final class ChiselItem extends Item {
     public enum Mode { SINGLE, FOUR_BY_FOUR, SMART }
@@ -15,10 +14,5 @@ public final class ChiselItem extends Item {
 
     public Mode mode() {
         return mode;
-    }
-
-    @Override
-    public boolean isDamageable(ItemStack stack) {
-        return true;
     }
 }
