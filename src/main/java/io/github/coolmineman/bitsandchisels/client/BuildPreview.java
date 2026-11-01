@@ -14,8 +14,10 @@ import net.minecraft.world.phys.HitResult;
 import java.util.ArrayList;
 import java.util.List;
 
-/** HUD preview: shows click progress + estimated block count for current mode. */
 public final class BuildPreview {
+    private static final int IOS_BLUE = 0x007AFF;
+    private static final int IOS_SECONDARY = 0xAEAEB2;
+
     private BuildPreview() {}
 
     public static void render(GuiGraphicsExtractor graphics) {
@@ -27,31 +29,25 @@ public final class BuildPreview {
         if (!(mc.player.getMainHandItem().getItem() instanceof BlockItem)) return;
 
         Font font = mc.font;
-        List<String> lines = new ArrayList<>();
-        lines.add("Build: " + BuildModeState.mode.label);
         int need = Math.max(1, BuildModeState.mode.clicks);
-        lines.add("Corners: " + BuildModeState.clicks.size() + "/" + need);
+        String line1 = BuildModeState.mode.label;
+        String line2 = BuildModeState.clicks.size() + " of " + need;
 
-        // Live preview count with current look-at as next corner
         if (mc.hitResult != null && mc.hitResult.getType() == HitResult.Type.BLOCK) {
             BlockHitResult hit = (BlockHitResult) mc.hitResult;
             BlockPos next = hit.getBlockPos().relative(hit.getDirection());
             List<BlockPos> trial = new ArrayList<>(BuildModeState.clicks);
             trial.add(next);
+            while (trial.size() > need) trial.remove(trial.size() - 1);
             if (trial.size() >= need) {
-                // only use required clicks
-                while (trial.size() > need) trial.remove(trial.size() - 1);
                 int count = ShapeGenerator.generate(BuildModeState.mode, trial).size();
-                lines.add("Blocks: ~" + count);
-            } else {
-                lines.add("Right-click next corner");
+                line2 = "~" + count + " blocks";
             }
         }
 
-        int y = mc.getWindow().getGuiScaledHeight() - 60;
-        for (String line : lines) {
-            graphics.text(font, line, 6, y, 0xA0E0FF, true);
-            y += font.lineHeight + 1;
-        }
+        int x = 10;
+        int y = mc.getWindow().getGuiScaledHeight() - 48;
+        graphics.text(font, line1, x, y, IOS_BLUE, true);
+        graphics.text(font, line2, x, y + font.lineHeight + 2, IOS_SECONDARY, true);
     }
 }
