@@ -24,7 +24,7 @@ public final class CritterEggItem extends Item {
         BlockPos pos = context.getClickedPos().relative(context.getClickedFace());
         CritterMob mob = type.create((ServerLevel) level, null, pos, EntitySpawnReason.SPAWN_ITEM_USE, true, false);
         if (mob != null) {
-            mob.snapTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, level.random.nextFloat() * 360f, 0);
+            mob.snapTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, level.getRandom().nextFloat() * 360f, 0);
             level.addFreshEntity(mob);
             if (context.getPlayer() != null && !context.getPlayer().isCreative()) {
                 context.getItemInHand().shrink(1);
