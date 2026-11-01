@@ -15,13 +15,17 @@ import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 
-/** Cube-blob body + head + legs with simple walk bob (placeholder until Blockbench models). */
+/** Placeholder cube critter with walk-cycle leg animation. */
 public final class CritterRenderer extends MobRenderer<CritterMob, LivingEntityRenderState, CritterRenderer.Model> {
     private final Identifier texture;
 
     public CritterRenderer(EntityRendererProvider.Context ctx, String textureId) {
-        super(ctx, new Model(ctx.bakeLayer(Model.LAYER)), 0.4f);
+        super(ctx, new Model(bake()), 0.4f);
         this.texture = BitsAndChisels.id("textures/entity/" + textureId + ".png");
+    }
+
+    private static ModelPart bake() {
+        return Model.createBodyLayer().bakeRoot();
     }
 
     @Override
@@ -35,17 +39,12 @@ public final class CritterRenderer extends MobRenderer<CritterMob, LivingEntityR
     }
 
     public static final class Model extends EntityModel<LivingEntityRenderState> {
-        public static final net.minecraft.client.model.geom.ModelLayerLocation LAYER =
-            new net.minecraft.client.model.geom.ModelLayerLocation(BitsAndChisels.id("critter"), "main");
-
-        private final ModelPart body;
-        private final ModelPart head;
         private final ModelPart leg0;
         private final ModelPart leg1;
+        private final ModelPart head;
 
         public Model(ModelPart root) {
             super(root);
-            this.body = root.getChild("body");
             this.head = root.getChild("head");
             this.leg0 = root.getChild("leg0");
             this.leg1 = root.getChild("leg1");
@@ -56,7 +55,7 @@ public final class CritterRenderer extends MobRenderer<CritterMob, LivingEntityR
             PartDefinition root = mesh.getRoot();
             root.addOrReplaceChild("body",
                 CubeListBuilder.create().texOffs(0, 0).addBox(-4, 4, -4, 8, 8, 8),
-                PartPose.offset(0, 0, 0));
+                PartPose.ZERO);
             root.addOrReplaceChild("head",
                 CubeListBuilder.create().texOffs(32, 0).addBox(-3, 0, -3, 6, 6, 6),
                 PartPose.offset(0, 12, -2));
@@ -75,8 +74,8 @@ public final class CritterRenderer extends MobRenderer<CritterMob, LivingEntityR
             float a = state.walkAnimationSpeed;
             leg0.xRot = Mth.cos(w * 0.6662f) * 1.4f * a;
             leg1.xRot = Mth.cos(w * 0.6662f + (float) Math.PI) * 1.4f * a;
-            head.yRot = state.yRot * ((float) Math.PI / 180f) * 0.25f;
-            head.xRot = state.xRot * ((float) Math.PI / 180f) * 0.25f;
+            head.yRot = state.yRot * ((float) Math.PI / 180f) * 0.2f;
+            head.xRot = state.xRot * ((float) Math.PI / 180f) * 0.2f;
         }
     }
 }
