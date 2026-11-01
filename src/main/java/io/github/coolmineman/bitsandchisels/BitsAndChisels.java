@@ -30,6 +30,7 @@ import java.util.function.Function;
 
 public final class BitsAndChisels implements ModInitializer {
     public static final String MOD_ID = "bitsandchisels";
+    public static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger("bitsandchisels");
 
     public static final ResourceKey<Block> BITS_BLOCK_KEY = ResourceKey.create(Registries.BLOCK, id("bits_block"));
     public static final BitsBlock BITS_BLOCK = Registry.register(
